@@ -110,18 +110,23 @@ export default function Game() {
         {/* How to Play button */}
         <button
           onClick={() => setShowRules(true)}
-          className="text-blue-600 hover:text-blue-800 text-sm font-medium underline"
+          className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-800 text-sm font-medium rounded-lg border border-gray-300 transition-colors"
         >
           📖 How to Play
         </button>
         
         {/* Agent notice */}
-        <div className="w-full p-3 bg-gray-100 border border-gray-300 rounded-lg text-center">
+        <a
+          href="/AGENTS.md"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="w-full p-3 bg-gray-100 hover:bg-gray-200 border border-gray-300 rounded-lg text-center block transition-colors"
+        >
           <p className="text-sm text-gray-700">
             🤖 <span className="font-medium">Agents:</span>{' '}
             <code className="bg-gray-200 px-2 py-0.5 rounded text-xs">curl gomoku-arena.vercel.app/AGENTS.md</code>
           </p>
-        </div>
+        </a>
 
         <div className="w-full space-y-4">
           <div>
@@ -206,7 +211,7 @@ export default function Game() {
         <h1 className="text-xl font-bold">Gomoku</h1>
         <button
           onClick={() => setShowRules(true)}
-          className="px-3 py-1 text-sm text-gray-600 hover:text-black"
+          className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-600 hover:text-black text-sm font-medium transition-colors"
         >
           ?
         </button>
@@ -264,6 +269,16 @@ export default function Game() {
           </span>
         </div>
       </div>
+
+      {/* Agent link footer */}
+      <a
+        href="/AGENTS.md"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="text-xs text-gray-500 hover:text-gray-700 transition-colors"
+      >
+        🤖 Agent API docs
+      </a>
 
       {/* Game over actions */}
       {gameState.gameOver && (
