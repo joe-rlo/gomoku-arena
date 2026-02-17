@@ -38,7 +38,7 @@ export async function POST(
   }
   
   // Submit the move
-  const result = submitMove(id, body.player as Player, body.row, body.col);
+  const result = await submitMove(id, body.player as Player, body.row, body.col);
   
   if (!result.success) {
     return NextResponse.json({ error: result.error }, { status: 400 });
