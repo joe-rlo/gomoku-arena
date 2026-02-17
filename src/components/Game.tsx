@@ -1,0 +1,254 @@
+'use client';
+
+import { useState, useEffect, useCallback } from 'react';
+import Board from './Board';
+import { 
+  GameState, 
+  createInitialState, 
+  makeMove, 
+  getAIMove,
+  Player 
+} from '@/lib/game';
+
+type GameMode = 'human-vs-human' | 'human-vs-ai' | 'ai-vs-ai';
+type PlayerConfig = {
+  type: 'human' | 'ai';
+  name: string;
+};
+
+export default function Game() {
+  const [gameState, setGameState] = useState<GameState>(createInitialState);
+  const [gameMode, setGameMode] = useState<GameMode>('human-vs-ai');
+  const [playerName, setPlayerName] = useState('');
+  const [gameStarted, setGameStarted] = useState(false);
+  const [thinking, setThinking] = useState(false);
+  const [stats, setStats] = useState({ humanWins: 0, agentWins: 0, draws: 0 });
+
+  const players: Record<Player, PlayerConfig> = {
+    1: gameMode === 'ai-vs-ai' 
+      ? { type: 'ai', name: '🤖 AI Black' }
+      : { type: 'human', name: playerName || 'You' },
+    2: gameMode === 'human-vs-human'
+      ? { type: 'human', name: 'Player 2' }
+      : { type: 'ai', name: '🤖 AI' },
+  };
+
+  const currentConfig = players[gameState.currentPlayer];
+  const isAITurn = currentConfig.type === 'ai' && !gameState.gameOver && gameStarted;
+
+  // AI move logic
+  const makeAIMove = useCallback(() => {
+    if (!isAITurn) return;
+    
+    setThinking(true);
+    
+    // Add slight delay for UX
+    setTimeout(() => {
+      const move = getAIMove(gameState.board, gameState.currentPlayer);
+      if (move) {
+        const newState = makeMove(gameState, move[0], move[1]);
+        if (newState) {
+          setGameState(newState);
+        }
+      }
+      setThinking(false);
+    }, 500);
+  }, [isAITurn, gameState]);
+
+  useEffect(() => {
+    if (isAITurn && !thinking) {
+      makeAIMove();
+    }
+  }, [isAITurn, thinking, makeAIMove]);
+
+  // Record game result
+  useEffect(() => {
+    if (gameState.gameOver && gameState.winner) {
+      const winner = players[gameState.winner];
+      setStats(prev => ({
+        ...prev,
+        humanWins: prev.humanWins + (winner.type === 'human' ? 1 : 0),
+        agentWins: prev.agentWins + (winner.type === 'ai' ? 1 : 0),
+      }));
+    } else if (gameState.gameOver && !gameState.winner) {
+      setStats(prev => ({ ...prev, draws: prev.draws + 1 }));
+    }
+  }, [gameState.gameOver]);
+
+  const handleCellClick = (row: number, col: number) => {
+    if (currentConfig.type === 'ai' || thinking) return;
+    
+    const newState = makeMove(gameState, row, col);
+    if (newState) {
+      setGameState(newState);
+    }
+  };
+
+  const handleNewGame = () => {
+    setGameState(createInitialState());
+    setGameStarted(true);
+  };
+
+  const handleReset = () => {
+    setGameState(createInitialState());
+    setGameStarted(false);
+  };
+
+  const lastMove = gameState.moveHistory.length > 0 
+    ? gameState.moveHistory[gameState.moveHistory.length - 1] as [number, number]
+    : null;
+
+  if (!gameStarted) {
+    return (
+      <div className="flex flex-col items-center gap-6 p-4 max-w-md mx-auto">
+        <h1 className="text-3xl font-bold text-center">⚫ Gomoku Arena ⚪</h1>
+        <p className="text-center text-gray-600">
+          Get 5 in a row to win. Humans vs AI.
+        </p>
+
+        <div className="w-full space-y-4">
+          <div>
+            <label className="block text-sm font-medium mb-2">Your Name</label>
+            <input
+              type="text"
+              value={playerName}
+              onChange={(e) => setPlayerName(e.target.value)}
+              placeholder="Enter your name"
+              className="w-full px-4 py-3 border rounded-lg text-lg"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-2">Game Mode</label>
+            <div className="grid grid-cols-1 gap-2">
+              {[
+                { mode: 'human-vs-ai' as GameMode, label: '👤 vs 🤖 Human vs AI', desc: 'Challenge the machine' },
+                { mode: 'human-vs-human' as GameMode, label: '👤 vs 👤 Pass & Play', desc: 'Play with a friend' },
+                { mode: 'ai-vs-ai' as GameMode, label: '🤖 vs 🤖 AI Battle', desc: 'Watch AIs compete' },
+              ].map(({ mode, label, desc }) => (
+                <button
+                  key={mode}
+                  onClick={() => setGameMode(mode)}
+                  className={`
+                    p-4 rounded-lg border-2 text-left transition-all
+                    ${gameMode === mode 
+                      ? 'border-blue-500 bg-blue-50' 
+                      : 'border-gray-200 hover:border-gray-300'
+                    }
+                  `}
+                >
+                  <div className="font-medium">{label}</div>
+                  <div className="text-sm text-gray-500">{desc}</div>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <button
+            onClick={handleNewGame}
+            className="w-full py-4 bg-black text-white rounded-lg text-lg font-medium hover:bg-gray-800 transition-colors"
+          >
+            Start Game
+          </button>
+        </div>
+
+        {/* Stats */}
+        {(stats.humanWins > 0 || stats.agentWins > 0) && (
+          <div className="w-full p-4 bg-gray-50 rounded-lg">
+            <h3 className="font-medium mb-2 text-center">Session Stats</h3>
+            <div className="grid grid-cols-3 gap-4 text-center">
+              <div>
+                <div className="text-2xl font-bold text-green-600">{stats.humanWins}</div>
+                <div className="text-sm text-gray-500">Human Wins</div>
+              </div>
+              <div>
+                <div className="text-2xl font-bold text-gray-400">{stats.draws}</div>
+                <div className="text-sm text-gray-500">Draws</div>
+              </div>
+              <div>
+                <div className="text-2xl font-bold text-red-600">{stats.agentWins}</div>
+                <div className="text-sm text-gray-500">AI Wins</div>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col items-center gap-4 p-4 max-w-lg mx-auto">
+      {/* Header */}
+      <div className="w-full flex items-center justify-between">
+        <button
+          onClick={handleReset}
+          className="px-3 py-1 text-sm text-gray-600 hover:text-black"
+        >
+          ← Back
+        </button>
+        <h1 className="text-xl font-bold">Gomoku</h1>
+        <div className="w-16" />
+      </div>
+
+      {/* Status */}
+      <div className="text-center">
+        {gameState.gameOver ? (
+          <div className="text-xl font-bold">
+            {gameState.winner 
+              ? `${players[gameState.winner].name} wins! 🎉`
+              : "It's a draw!"
+            }
+          </div>
+        ) : (
+          <div className="flex items-center gap-2">
+            <div className={`w-4 h-4 rounded-full ${
+              gameState.currentPlayer === 1 ? 'bg-black' : 'bg-white border border-gray-300'
+            }`} />
+            <span>
+              {thinking ? (
+                <span className="flex items-center gap-1">
+                  {currentConfig.name} thinking
+                  <span className="animate-pulse">...</span>
+                </span>
+              ) : (
+                `${currentConfig.name}'s turn`
+              )}
+            </span>
+          </div>
+        )}
+      </div>
+
+      {/* Board */}
+      <Board
+        board={gameState.board}
+        onCellClick={handleCellClick}
+        disabled={thinking || currentConfig.type === 'ai'}
+        winningCells={gameState.winningCells}
+        lastMove={lastMove}
+      />
+
+      {/* Move count */}
+      <div className="text-sm text-gray-500">
+        Move {gameState.moveHistory.length}
+      </div>
+
+      {/* Game over actions */}
+      {gameState.gameOver && (
+        <div className="flex gap-2">
+          <button
+            onClick={handleNewGame}
+            className="px-6 py-3 bg-black text-white rounded-lg font-medium hover:bg-gray-800"
+          >
+            Play Again
+          </button>
+          <button
+            onClick={handleReset}
+            className="px-6 py-3 border border-gray-300 rounded-lg font-medium hover:bg-gray-50"
+          >
+            Change Mode
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
