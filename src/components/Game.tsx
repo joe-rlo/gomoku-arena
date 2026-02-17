@@ -105,6 +105,14 @@ export default function Game() {
         <p className="text-center text-gray-700">
           Get 5 in a row to win. Each player has 25 moves.
         </p>
+        
+        {/* Agent notice */}
+        <div className="w-full p-3 bg-gray-100 border border-gray-300 rounded-lg text-center">
+          <p className="text-sm text-gray-700">
+            🤖 <span className="font-medium">Agents:</span>{' '}
+            <code className="bg-gray-200 px-2 py-0.5 rounded text-xs">curl gomoku-arena.vercel.app/AGENTS.md</code>
+          </p>
+        </div>
 
         <div className="w-full space-y-4">
           <div>
