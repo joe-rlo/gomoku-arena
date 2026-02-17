@@ -103,7 +103,7 @@ export default function Game() {
       <div className="flex flex-col items-center gap-6 p-4 max-w-md mx-auto">
         <h1 className="text-3xl font-bold text-center">⚫ Gomoku Arena ⚪</h1>
         <p className="text-center text-gray-600">
-          Get 5 in a row to win. Humans vs AI.
+          Get 5 in a row to win. Each player has 25 moves.
         </p>
 
         <div className="w-full space-y-4">
@@ -227,9 +227,20 @@ export default function Game() {
         lastMove={lastMove}
       />
 
-      {/* Move count */}
-      <div className="text-sm text-gray-500">
-        Move {gameState.moveHistory.length}
+      {/* Moves remaining */}
+      <div className="flex gap-6 text-sm">
+        <div className="flex items-center gap-1">
+          <div className="w-3 h-3 rounded-full bg-black" />
+          <span className={gameState.movesRemaining[1] <= 5 ? 'text-red-600 font-medium' : 'text-gray-600'}>
+            {gameState.movesRemaining[1]} left
+          </span>
+        </div>
+        <div className="flex items-center gap-1">
+          <div className="w-3 h-3 rounded-full bg-white border border-gray-300" />
+          <span className={gameState.movesRemaining[2] <= 5 ? 'text-red-600 font-medium' : 'text-gray-600'}>
+            {gameState.movesRemaining[2]} left
+          </span>
+        </div>
       </div>
 
       {/* Game over actions */}

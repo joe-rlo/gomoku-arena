@@ -2,6 +2,7 @@
 
 export const BOARD_SIZE = 15;
 export const WIN_LENGTH = 5;
+export const MAX_MOVES_PER_PLAYER = 25;
 
 export type Player = 1 | 2; // 1 = Black, 2 = White
 export type Cell = 0 | Player;
@@ -13,6 +14,7 @@ export interface GameState {
   winner: Player | null;
   winningCells: [number, number][] | null;
   moveHistory: [number, number][];
+  movesRemaining: { 1: number; 2: number };
   gameOver: boolean;
 }
 
@@ -27,6 +29,7 @@ export function createInitialState(): GameState {
     winner: null,
     winningCells: null,
     moveHistory: [],
+    movesRemaining: { 1: MAX_MOVES_PER_PLAYER, 2: MAX_MOVES_PER_PLAYER },
     gameOver: false,
   };
 }
@@ -45,11 +48,25 @@ export function makeMove(state: GameState, row: number, col: number): GameState 
   if (state.gameOver || !isValidMove(state.board, row, col)) {
     return null;
   }
+  
+  // Check if current player has moves remaining
+  if (state.movesRemaining[state.currentPlayer] <= 0) {
+    return null;
+  }
 
   const newBoard = state.board.map(r => [...r]);
   newBoard[row][col] = state.currentPlayer;
 
   const winResult = checkWin(newBoard, row, col, state.currentPlayer);
+  
+  const newMovesRemaining = {
+    ...state.movesRemaining,
+    [state.currentPlayer]: state.movesRemaining[state.currentPlayer] - 1,
+  };
+  
+  // Game ends if: win, board full, or both players out of moves
+  const bothOutOfMoves = newMovesRemaining[1] <= 0 && newMovesRemaining[2] <= 0;
+  const isOver = winResult !== null || isBoardFull(newBoard) || bothOutOfMoves;
   
   return {
     board: newBoard,
@@ -57,7 +74,8 @@ export function makeMove(state: GameState, row: number, col: number): GameState 
     winner: winResult ? state.currentPlayer : null,
     winningCells: winResult,
     moveHistory: [...state.moveHistory, [row, col]],
-    gameOver: winResult !== null || isBoardFull(newBoard),
+    movesRemaining: newMovesRemaining,
+    gameOver: isOver,
   };
 }
 
