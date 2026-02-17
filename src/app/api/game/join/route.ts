@@ -5,6 +5,7 @@ interface JoinRequest {
   code: string;
   name: string;
   type?: 'human' | 'agent';
+  model?: string;  // AI model identifier (e.g., "gpt-4", "claude-3-opus")
 }
 
 // POST /api/game/join - Join a game by invite code
@@ -34,6 +35,7 @@ export async function POST(request: NextRequest) {
   const result = await joinGame(game.id, {
     playerName: body.name,
     playerType: body.type || 'human',
+    playerModel: body.model,
   });
   
   if (!result.success) {

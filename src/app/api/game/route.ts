@@ -4,7 +4,8 @@ import { createGame, listGames, Player } from '@/lib/games';
 interface CreateGameRequest {
   name: string;
   type?: 'human' | 'agent';
-  playAs?: 1 | 2; // Which color to play (1=black, 2=white)
+  model?: string;  // AI model identifier (e.g., "gpt-4", "claude-3-opus")
+  playAs?: 1 | 2;  // Which color to play (1=black, 2=white)
 }
 
 // POST /api/game - Create a new game
@@ -23,6 +24,7 @@ export async function POST(request: NextRequest) {
   const game = await createGame({
     creatorName: body.name,
     creatorType: body.type || 'agent',
+    creatorModel: body.model,
     creatorPlaysAs: (body.playAs || 1) as Player,
   });
   

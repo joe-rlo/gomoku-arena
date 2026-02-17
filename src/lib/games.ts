@@ -18,6 +18,7 @@ const GAME_TTL = 60 * 60; // 1 hour TTL for games
 export interface PlayerInfo {
   name: string;
   type: 'human' | 'agent';
+  model?: string;  // AI model identifier (e.g., "gpt-4", "claude-3-opus")
   joinedAt: number;
 }
 
@@ -58,6 +59,7 @@ async function saveGame(game: GameSession): Promise<void> {
 export interface CreateGameOptions {
   creatorName: string;
   creatorType: 'human' | 'agent';
+  creatorModel?: string;  // AI model identifier for agents
   creatorPlaysAs?: Player;
 }
 
@@ -65,14 +67,21 @@ export async function createGame(options: CreateGameOptions): Promise<GameSessio
   const inviteCode = generateInviteCode();
   const creatorPlaysAs = options.creatorPlaysAs || 1;
   
+  const playerInfo: PlayerInfo = {
+    name: options.creatorName,
+    type: options.creatorType,
+    joinedAt: Date.now(),
+    ...(options.creatorModel && { model: options.creatorModel }),
+  };
+  
   const game: GameSession = {
     id: generateId(),
     board: createEmptyBoard(),
     currentPlayer: 1,
     movesRemaining: { 1: MAX_MOVES_PER_PLAYER, 2: MAX_MOVES_PER_PLAYER },
     players: {
-      1: creatorPlaysAs === 1 ? { name: options.creatorName, type: options.creatorType, joinedAt: Date.now() } : null,
-      2: creatorPlaysAs === 2 ? { name: options.creatorName, type: options.creatorType, joinedAt: Date.now() } : null,
+      1: creatorPlaysAs === 1 ? playerInfo : null,
+      2: creatorPlaysAs === 2 ? playerInfo : null,
     },
     winner: null,
     gameOver: false,
@@ -108,6 +117,7 @@ export async function listGames(): Promise<GameSession[]> {
 export interface JoinGameOptions {
   playerName: string;
   playerType: 'human' | 'agent';
+  playerModel?: string;  // AI model identifier for agents
 }
 
 export async function joinGame(gameId: string, options: JoinGameOptions): Promise<{ success: boolean; error?: string; game?: GameSession; assignedPlayer?: Player }> {
@@ -136,6 +146,7 @@ export async function joinGame(gameId: string, options: JoinGameOptions): Promis
     name: options.playerName,
     type: options.playerType,
     joinedAt: Date.now(),
+    ...(options.playerModel && { model: options.playerModel }),
   };
   game.updatedAt = Date.now();
   
@@ -207,11 +218,18 @@ export async function submitMove(gameId: string, player: Player, row: number, co
 // Global stats tracking
 const STATS_KEY = 'gomoku:stats';
 
+export interface ModelStats {
+  wins: number;
+  losses: number;
+  ties: number;
+}
+
 export interface GlobalStats {
   humanWins: number;
   agentWins: number;
   ties: number;
   totalGames: number;
+  modelStats?: Record<string, ModelStats>;  // Per-model win/loss tracking
 }
 
 async function updateGlobalStats(game: GameSession): Promise<void> {
@@ -219,16 +237,40 @@ async function updateGlobalStats(game: GameSession): Promise<void> {
   
   const stats = await getGlobalStats();
   stats.totalGames++;
+  stats.modelStats = stats.modelStats || {};
+  
+  const player1 = game.players[1];
+  const player2 = game.players[2];
+  
+  // Helper to update model stats
+  const updateModel = (model: string | undefined, result: 'win' | 'loss' | 'tie') => {
+    if (!model) return;
+    if (!stats.modelStats![model]) {
+      stats.modelStats![model] = { wins: 0, losses: 0, ties: 0 };
+    }
+    if (result === 'win') stats.modelStats![model].wins++;
+    else if (result === 'loss') stats.modelStats![model].losses++;
+    else stats.modelStats![model].ties++;
+  };
   
   if (!game.winner) {
     stats.ties++;
+    // Both players tie
+    updateModel(player1?.model, 'tie');
+    updateModel(player2?.model, 'tie');
   } else {
     const winner = game.players[game.winner];
+    const loser = game.players[game.winner === 1 ? 2 : 1];
+    
     if (winner?.type === 'agent') {
       stats.agentWins++;
     } else {
       stats.humanWins++;
     }
+    
+    // Track model-specific stats
+    updateModel(winner?.model, 'win');
+    updateModel(loser?.model, 'loss');
   }
   
   await redis.set(STATS_KEY, JSON.stringify(stats));
