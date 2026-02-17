@@ -1,8 +1,19 @@
-// Server-side game session management with validation
+// Server-side game session management with Redis persistence
 
+import { Redis } from '@upstash/redis';
 import { Board, Player, createEmptyBoard, isValidMove, checkWin, BOARD_SIZE, MAX_MOVES_PER_PLAYER } from './game';
 
 export type { Player };
+
+// Initialize Redis (uses UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN env vars)
+const redis = process.env.UPSTASH_REDIS_REST_URL 
+  ? new Redis({
+      url: process.env.UPSTASH_REDIS_REST_URL,
+      token: process.env.UPSTASH_REDIS_REST_TOKEN!,
+    })
+  : null;
+
+const GAME_TTL = 60 * 60; // 1 hour TTL for games
 
 export interface PlayerInfo {
   name: string;
@@ -21,11 +32,8 @@ export interface GameSession {
   moveHistory: { player: Player; row: number; col: number }[];
   createdAt: number;
   updatedAt: number;
-  inviteCode: string; // Short code for sharing
+  inviteCode: string;
 }
-
-// In-memory store (resets on deploy, but fine for MVP)
-const games = new Map<string, GameSession>();
 
 function generateId(): string {
   return `game_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
@@ -35,16 +43,25 @@ function generateInviteCode(): string {
   return Math.random().toString(36).slice(2, 8).toUpperCase();
 }
 
-// Invite code lookup
-const inviteCodes = new Map<string, string>(); // inviteCode -> gameId
+// Redis keys
+const gameKey = (id: string) => `gomoku:game:${id}`;
+const inviteKey = (code: string) => `gomoku:invite:${code.toUpperCase()}`;
+
+async function saveGame(game: GameSession): Promise<void> {
+  if (!redis) return;
+  await Promise.all([
+    redis.set(gameKey(game.id), JSON.stringify(game), { ex: GAME_TTL }),
+    redis.set(inviteKey(game.inviteCode), game.id, { ex: GAME_TTL }),
+  ]);
+}
 
 export interface CreateGameOptions {
   creatorName: string;
   creatorType: 'human' | 'agent';
-  creatorPlaysAs?: Player; // defaults to 1 (black)
+  creatorPlaysAs?: Player;
 }
 
-export function createGame(options: CreateGameOptions): GameSession {
+export async function createGame(options: CreateGameOptions): Promise<GameSession> {
   const inviteCode = generateInviteCode();
   const creatorPlaysAs = options.creatorPlaysAs || 1;
   
@@ -64,14 +81,28 @@ export function createGame(options: CreateGameOptions): GameSession {
     updatedAt: Date.now(),
     inviteCode,
   };
-  games.set(game.id, game);
-  inviteCodes.set(inviteCode, game.id);
+  
+  await saveGame(game);
   return game;
 }
 
-export function getGameByInviteCode(code: string): GameSession | null {
-  const gameId = inviteCodes.get(code.toUpperCase());
-  return gameId ? games.get(gameId) || null : null;
+export async function getGame(id: string): Promise<GameSession | null> {
+  if (!redis) return null;
+  const data = await redis.get<string>(gameKey(id));
+  if (!data) return null;
+  return typeof data === 'string' ? JSON.parse(data) : data;
+}
+
+export async function getGameByInviteCode(code: string): Promise<GameSession | null> {
+  if (!redis) return null;
+  const gameId = await redis.get<string>(inviteKey(code.toUpperCase()));
+  if (!gameId) return null;
+  return getGame(gameId);
+}
+
+export async function listGames(): Promise<GameSession[]> {
+  // Not implementing full list for now - would need Redis SCAN
+  return [];
 }
 
 export interface JoinGameOptions {
@@ -79,8 +110,8 @@ export interface JoinGameOptions {
   playerType: 'human' | 'agent';
 }
 
-export function joinGame(gameId: string, options: JoinGameOptions): { success: boolean; error?: string; game?: GameSession; assignedPlayer?: Player } {
-  const game = games.get(gameId);
+export async function joinGame(gameId: string, options: JoinGameOptions): Promise<{ success: boolean; error?: string; game?: GameSession; assignedPlayer?: Player }> {
+  const game = await getGame(gameId);
   
   if (!game) {
     return { success: false, error: 'Game not found' };
@@ -90,7 +121,6 @@ export function joinGame(gameId: string, options: JoinGameOptions): { success: b
     return { success: false, error: 'Game is already over' };
   }
   
-  // Find empty slot
   let assignedPlayer: Player | null = null;
   if (!game.players[1]) {
     assignedPlayer = 1;
@@ -109,18 +139,9 @@ export function joinGame(gameId: string, options: JoinGameOptions): { success: b
   };
   game.updatedAt = Date.now();
   
+  await saveGame(game);
+  
   return { success: true, game, assignedPlayer };
-}
-
-export function getGame(id: string): GameSession | null {
-  return games.get(id) || null;
-}
-
-export function listGames(): GameSession[] {
-  return Array.from(games.values())
-    .filter(g => !g.gameOver)
-    .sort((a, b) => b.updatedAt - a.updatedAt)
-    .slice(0, 20);
 }
 
 export interface MoveResult {
@@ -129,8 +150,8 @@ export interface MoveResult {
   game?: GameSession;
 }
 
-export function submitMove(gameId: string, player: Player, row: number, col: number): MoveResult {
-  const game = games.get(gameId);
+export async function submitMove(gameId: string, player: Player, row: number, col: number): Promise<MoveResult> {
+  const game = await getGame(gameId);
   
   if (!game) {
     return { success: false, error: 'Game not found' };
@@ -168,25 +189,12 @@ export function submitMove(gameId: string, player: Player, row: number, col: num
     game.winner = player;
     game.gameOver = true;
   } else if (game.movesRemaining[1] <= 0 && game.movesRemaining[2] <= 0) {
-    // Both players out of moves = draw
     game.gameOver = true;
   } else {
-    // Switch turns
     game.currentPlayer = player === 1 ? 2 : 1;
   }
   
+  await saveGame(game);
+  
   return { success: true, game };
-}
-
-// Cleanup old games periodically (games older than 1 hour)
-export function cleanupOldGames(): number {
-  const oneHourAgo = Date.now() - 60 * 60 * 1000;
-  let removed = 0;
-  for (const [id, game] of games) {
-    if (game.updatedAt < oneHourAgo) {
-      games.delete(id);
-      removed++;
-    }
-  }
-  return removed;
 }

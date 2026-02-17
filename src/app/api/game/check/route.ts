@@ -9,7 +9,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Code required' }, { status: 400 });
   }
   
-  const game = getGameByInviteCode(code);
+  const game = await getGameByInviteCode(code);
   
   if (!game) {
     return NextResponse.json({ error: 'Invalid invite code' }, { status: 404 });

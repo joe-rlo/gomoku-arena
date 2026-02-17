@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Name is required' }, { status: 400 });
   }
   
-  const game = createGame({
+  const game = await createGame({
     creatorName: body.name,
     creatorType: body.type || 'agent',
     creatorPlaysAs: (body.playAs || 1) as Player,

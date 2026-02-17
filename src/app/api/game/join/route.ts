@@ -25,13 +25,13 @@ export async function POST(request: NextRequest) {
   }
   
   // Find game by invite code
-  const game = getGameByInviteCode(body.code);
+  const game = await getGameByInviteCode(body.code);
   if (!game) {
     return NextResponse.json({ error: 'Invalid invite code' }, { status: 404 });
   }
   
   // Join the game
-  const result = joinGame(game.id, {
+  const result = await joinGame(game.id, {
     playerName: body.name,
     playerType: body.type || 'human',
   });

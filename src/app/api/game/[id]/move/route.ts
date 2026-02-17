@@ -16,7 +16,7 @@ export async function POST(
   const { id } = await params;
   
   // Check game exists first
-  const existingGame = getGame(id);
+  const existingGame = await getGame(id);
   if (!existingGame) {
     return NextResponse.json({ error: 'Game not found' }, { status: 404 });
   }
