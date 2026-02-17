@@ -196,5 +196,53 @@ export async function submitMove(gameId: string, player: Player, row: number, co
   
   await saveGame(game);
   
+  // Update global stats if game just ended
+  if (game.gameOver) {
+    await updateGlobalStats(game);
+  }
+  
   return { success: true, game };
+}
+
+// Global stats tracking
+const STATS_KEY = 'gomoku:stats';
+
+export interface GlobalStats {
+  humanWins: number;
+  agentWins: number;
+  ties: number;
+  totalGames: number;
+}
+
+async function updateGlobalStats(game: GameSession): Promise<void> {
+  if (!redis) return;
+  
+  const stats = await getGlobalStats();
+  stats.totalGames++;
+  
+  if (!game.winner) {
+    stats.ties++;
+  } else {
+    const winner = game.players[game.winner];
+    if (winner?.type === 'agent') {
+      stats.agentWins++;
+    } else {
+      stats.humanWins++;
+    }
+  }
+  
+  await redis.set(STATS_KEY, JSON.stringify(stats));
+}
+
+export async function getGlobalStats(): Promise<GlobalStats> {
+  if (!redis) {
+    return { humanWins: 0, agentWins: 0, ties: 0, totalGames: 0 };
+  }
+  
+  const data = await redis.get<string>(STATS_KEY);
+  if (!data) {
+    return { humanWins: 0, agentWins: 0, ties: 0, totalGames: 0 };
+  }
+  
+  return typeof data === 'string' ? JSON.parse(data) : data;
 }

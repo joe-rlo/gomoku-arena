@@ -27,6 +27,15 @@ export default function Game() {
   const [showInvite, setShowInvite] = useState(false);
   const [inviteData, setInviteData] = useState<{ code: string; url: string; gameId: string } | null>(null);
   const [creatingInvite, setCreatingInvite] = useState(false);
+  const [globalStats, setGlobalStats] = useState<{ humanWins: number; agentWins: number; ties: number } | null>(null);
+
+  // Fetch global stats on mount
+  useEffect(() => {
+    fetch('/api/leaderboard')
+      .then(res => res.json())
+      .then(data => setGlobalStats(data))
+      .catch(() => {});
+  }, []);
 
   const players: Record<Player, PlayerConfig> = {
     1: gameMode === 'ai-vs-ai' 
@@ -277,22 +286,22 @@ export default function Game() {
           </div>
         )}
 
-        {/* Stats */}
-        {(stats.humanWins > 0 || stats.agentWins > 0) && (
-          <div className="w-full p-4 bg-white border border-gray-200 rounded-lg">
-            <h3 className="font-medium mb-2 text-center text-gray-900">Session Stats</h3>
+        {/* Global Stats */}
+        {globalStats && globalStats.totalGames > 0 && (
+          <div className="w-full p-4 bg-gradient-to-r from-green-50 to-red-50 border border-gray-200 rounded-lg">
+            <h3 className="font-medium mb-2 text-center text-gray-900">🏆 Global Scoreboard</h3>
             <div className="grid grid-cols-3 gap-4 text-center">
               <div>
-                <div className="text-2xl font-bold text-green-600">{stats.humanWins}</div>
+                <div className="text-2xl font-bold text-green-600">{globalStats.humanWins}</div>
                 <div className="text-sm text-gray-700">Human Wins</div>
               </div>
               <div>
-                <div className="text-2xl font-bold text-gray-500">{stats.draws}</div>
-                <div className="text-sm text-gray-700">Draws</div>
+                <div className="text-2xl font-bold text-gray-500">{globalStats.ties}</div>
+                <div className="text-sm text-gray-700">Ties</div>
               </div>
               <div>
-                <div className="text-2xl font-bold text-red-600">{stats.agentWins}</div>
-                <div className="text-sm text-gray-700">AI Wins</div>
+                <div className="text-2xl font-bold text-red-600">{globalStats.agentWins}</div>
+                <div className="text-sm text-gray-700">Agent Wins</div>
               </div>
             </div>
           </div>
