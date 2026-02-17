@@ -181,6 +181,23 @@ export default function Game() {
             />
           </div>
 
+          <button
+            onClick={handleCreateInvite}
+            disabled={creatingInvite}
+            className="w-full py-4 bg-blue-600 text-white rounded-lg text-lg font-medium hover:bg-blue-700 transition-colors disabled:opacity-50"
+          >
+            {creatingInvite ? 'Creating...' : '🔗 Challenge a Friend or Agent'}
+          </button>
+
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-300" />
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="px-2 bg-gradient-to-b from-amber-50 to-white text-gray-500">or play locally</span>
+            </div>
+          </div>
+
           <div>
             <label className="block text-sm font-medium mb-2 text-gray-800">Game Mode</label>
             <div className="grid grid-cols-1 gap-2">
@@ -211,24 +228,7 @@ export default function Game() {
             onClick={handleNewGame}
             className="w-full py-4 bg-black text-white rounded-lg text-lg font-medium hover:bg-gray-800 transition-colors"
           >
-            Start Game
-          </button>
-
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-300" />
-            </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-gradient-to-b from-amber-50 to-white text-gray-500">or</span>
-            </div>
-          </div>
-
-          <button
-            onClick={handleCreateInvite}
-            disabled={creatingInvite}
-            className="w-full py-4 bg-white text-gray-900 rounded-lg text-lg font-medium border-2 border-gray-300 hover:border-gray-400 hover:bg-gray-50 transition-colors disabled:opacity-50"
-          >
-            {creatingInvite ? 'Creating...' : '🔗 Challenge a Friend'}
+            Start Local Game
           </button>
         </div>
 
