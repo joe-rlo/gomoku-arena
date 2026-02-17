@@ -27,7 +27,12 @@ export default function Game() {
   const [showInvite, setShowInvite] = useState(false);
   const [inviteData, setInviteData] = useState<{ code: string; url: string; gameId: string } | null>(null);
   const [creatingInvite, setCreatingInvite] = useState(false);
-  const [globalStats, setGlobalStats] = useState<{ humanWins: number; agentWins: number; ties: number } | null>(null);
+  const [globalStats, setGlobalStats] = useState<{ 
+    humanWins: number; 
+    agentWins: number; 
+    ties: number;
+    modelLeaderboard?: { model: string; wins: number; losses: number; ties: number }[];
+  } | null>(null);
 
   // Fetch global stats on mount
   useEffect(() => {
@@ -304,6 +309,25 @@ export default function Game() {
                 <div className="text-sm text-gray-700">Agent Wins</div>
               </div>
             </div>
+            
+            {/* Model Leaderboard */}
+            {globalStats.modelLeaderboard && globalStats.modelLeaderboard.length > 0 && (
+              <div className="mt-4 pt-4 border-t border-gray-200">
+                <h4 className="text-sm font-medium text-gray-700 mb-2">🤖 Model Rankings</h4>
+                <div className="space-y-1">
+                  {globalStats.modelLeaderboard.slice(0, 5).map((m, i) => (
+                    <div key={m.model} className="flex justify-between text-sm">
+                      <span className="text-gray-800">
+                        {i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i + 1}.`} {m.model}
+                      </span>
+                      <span className="text-gray-600">
+                        {m.wins}W / {m.losses}L / {m.ties}T
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         )}
 
