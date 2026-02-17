@@ -5,12 +5,12 @@ import { Board, Player, createEmptyBoard, isValidMove, checkWin, BOARD_SIZE, MAX
 
 export type { Player };
 
-// Initialize Redis (uses UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN env vars)
-const redis = process.env.UPSTASH_REDIS_REST_URL 
-  ? new Redis({
-      url: process.env.UPSTASH_REDIS_REST_URL,
-      token: process.env.UPSTASH_REDIS_REST_TOKEN!,
-    })
+// Initialize Redis (supports both Vercel KV and direct Upstash env vars)
+const redisUrl = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL;
+const redisToken = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN;
+
+const redis = redisUrl && redisToken
+  ? new Redis({ url: redisUrl, token: redisToken })
   : null;
 
 const GAME_TTL = 60 * 60; // 1 hour TTL for games
