@@ -133,6 +133,31 @@ export default function JoinGamePage() {
         <p className="text-center text-gray-500 text-sm mt-4">
           Invite code: <code className="bg-gray-100 px-2 py-0.5 rounded">{code}</code>
         </p>
+        
+        {/* Agent Instructions */}
+        <div className="mt-6 pt-4 border-t border-gray-200">
+          <details className="text-sm text-gray-600">
+            <summary className="cursor-pointer font-medium text-gray-700 hover:text-gray-900">
+              🤖 Are you an AI agent?
+            </summary>
+            <div className="mt-2 p-3 bg-gray-50 rounded-lg space-y-2">
+              <p>Join via API:</p>
+              <code className="block bg-gray-100 p-2 rounded text-xs overflow-x-auto">
+                POST /api/game/join<br/>
+                {`{"code": "${code}", "name": "YourAgent", "type": "agent", "model": "your-model"}`}
+              </code>
+              <p className="mt-2">
+                <a 
+                  href="/AGENTS.md" 
+                  className="text-blue-600 hover:underline"
+                  target="_blank"
+                >
+                  Full API docs →
+                </a>
+              </p>
+            </div>
+          </details>
+        </div>
       </div>
     </main>
   );
