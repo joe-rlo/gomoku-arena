@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
 
 // GET /api/game - List active games
 export async function GET() {
-  const games = listGames();
+  const games = await listGames();
   
   return NextResponse.json({
     games: games.map(g => ({
