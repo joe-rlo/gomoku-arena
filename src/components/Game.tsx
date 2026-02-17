@@ -23,6 +23,7 @@ export default function Game() {
   const [gameStarted, setGameStarted] = useState(false);
   const [thinking, setThinking] = useState(false);
   const [stats, setStats] = useState({ humanWins: 0, agentWins: 0, draws: 0 });
+  const [showRules, setShowRules] = useState(false);
 
   const players: Record<Player, PlayerConfig> = {
     1: gameMode === 'ai-vs-ai' 
@@ -105,6 +106,14 @@ export default function Game() {
         <p className="text-center text-gray-700">
           Get 5 in a row to win. Each player has 25 moves.
         </p>
+        
+        {/* How to Play button */}
+        <button
+          onClick={() => setShowRules(true)}
+          className="text-blue-600 hover:text-blue-800 text-sm font-medium underline"
+        >
+          📖 How to Play
+        </button>
         
         {/* Agent notice */}
         <div className="w-full p-3 bg-gray-100 border border-gray-300 rounded-lg text-center">
@@ -195,7 +204,12 @@ export default function Game() {
           ← Back
         </button>
         <h1 className="text-xl font-bold">Gomoku</h1>
-        <div className="w-16" />
+        <button
+          onClick={() => setShowRules(true)}
+          className="px-3 py-1 text-sm text-gray-600 hover:text-black"
+        >
+          ?
+        </button>
       </div>
 
       {/* Status */}
@@ -266,6 +280,62 @@ export default function Game() {
           >
             Change Mode
           </button>
+        </div>
+      )}
+
+      {/* Rules Modal */}
+      {showRules && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-xl max-w-md w-full max-h-[80vh] overflow-y-auto p-6">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-bold text-gray-900">How to Play Gomoku</h2>
+              <button
+                onClick={() => setShowRules(false)}
+                className="text-gray-500 hover:text-gray-700 text-2xl"
+              >
+                ×
+              </button>
+            </div>
+            
+            <div className="space-y-4 text-gray-700">
+              <div>
+                <h3 className="font-semibold text-gray-900 mb-1">🎯 Objective</h3>
+                <p>Be the first to get <strong>5 stones in a row</strong> — horizontally, vertically, or diagonally.</p>
+              </div>
+              
+              <div>
+                <h3 className="font-semibold text-gray-900 mb-1">⚫⚪ Players</h3>
+                <p><strong>Black</strong> (⚫) always moves first. Players alternate turns, placing one stone per turn.</p>
+              </div>
+              
+              <div>
+                <h3 className="font-semibold text-gray-900 mb-1">📍 Placing Stones</h3>
+                <p>Tap any empty cell to place your stone. Once placed, stones cannot be moved or removed.</p>
+              </div>
+              
+              <div>
+                <h3 className="font-semibold text-gray-900 mb-1">⚡ Move Limit</h3>
+                <p>Each player has <strong>25 moves maximum</strong>. Use them wisely! If both players run out without a winner, it&apos;s a draw.</p>
+              </div>
+              
+              <div>
+                <h3 className="font-semibold text-gray-900 mb-1">💡 Tips</h3>
+                <ul className="list-disc list-inside space-y-1 text-sm">
+                  <li>Control the center — more winning lines available</li>
+                  <li>Block your opponent&apos;s 4-in-a-row immediately</li>
+                  <li>Create &quot;forks&quot; — threaten 5-in-a-row in two directions</li>
+                  <li>Watch your remaining moves!</li>
+                </ul>
+              </div>
+            </div>
+            
+            <button
+              onClick={() => setShowRules(false)}
+              className="mt-6 w-full py-3 bg-black text-white rounded-lg font-medium hover:bg-gray-800"
+            >
+              Got it!
+            </button>
+          </div>
         </div>
       )}
     </div>
