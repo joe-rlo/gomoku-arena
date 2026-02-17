@@ -24,6 +24,9 @@ export default function Game() {
   const [thinking, setThinking] = useState(false);
   const [stats, setStats] = useState({ humanWins: 0, agentWins: 0, draws: 0 });
   const [showRules, setShowRules] = useState(false);
+  const [showInvite, setShowInvite] = useState(false);
+  const [inviteData, setInviteData] = useState<{ code: string; url: string; gameId: string } | null>(null);
+  const [creatingInvite, setCreatingInvite] = useState(false);
 
   const players: Record<Player, PlayerConfig> = {
     1: gameMode === 'ai-vs-ai' 
@@ -93,6 +96,44 @@ export default function Game() {
   const handleReset = () => {
     setGameState(createInitialState());
     setGameStarted(false);
+  };
+
+  const handleCreateInvite = async () => {
+    if (!playerName.trim()) {
+      alert('Please enter your name first');
+      return;
+    }
+    
+    setCreatingInvite(true);
+    try {
+      const res = await fetch('/api/game', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          name: playerName.trim(), 
+          type: 'human',
+          playAs: 1 
+        }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setInviteData({
+          code: data.inviteCode,
+          url: data.inviteUrl,
+          gameId: data.id,
+        });
+        setShowInvite(true);
+      }
+    } catch (err) {
+      console.error('Failed to create game:', err);
+    }
+    setCreatingInvite(false);
+  };
+
+  const copyInviteLink = () => {
+    if (inviteData) {
+      navigator.clipboard.writeText(inviteData.url);
+    }
   };
 
   const lastMove = gameState.moveHistory.length > 0 
@@ -172,7 +213,69 @@ export default function Game() {
           >
             Start Game
           </button>
+
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-300" />
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="px-2 bg-gradient-to-b from-amber-50 to-white text-gray-500">or</span>
+            </div>
+          </div>
+
+          <button
+            onClick={handleCreateInvite}
+            disabled={creatingInvite}
+            className="w-full py-4 bg-white text-gray-900 rounded-lg text-lg font-medium border-2 border-gray-300 hover:border-gray-400 hover:bg-gray-50 transition-colors disabled:opacity-50"
+          >
+            {creatingInvite ? 'Creating...' : '🔗 Challenge a Friend'}
+          </button>
         </div>
+
+        {/* Invite Modal */}
+        {showInvite && inviteData && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-xl max-w-md w-full p-6">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-bold text-gray-900">Invite Link Created!</h2>
+                <button
+                  onClick={() => setShowInvite(false)}
+                  className="text-gray-500 hover:text-gray-700 text-2xl"
+                >
+                  ×
+                </button>
+              </div>
+              
+              <p className="text-gray-600 mb-4">Share this link with a friend or agent:</p>
+              
+              <div className="bg-gray-100 rounded-lg p-3 mb-4">
+                <code className="text-sm text-gray-800 break-all">{inviteData.url}</code>
+              </div>
+              
+              <div className="flex gap-2 mb-4">
+                <button
+                  onClick={copyInviteLink}
+                  className="flex-1 py-3 bg-black text-white rounded-lg font-medium hover:bg-gray-800"
+                >
+                  📋 Copy Link
+                </button>
+              </div>
+              
+              <p className="text-sm text-gray-500 text-center">
+                Invite code: <code className="bg-gray-200 px-2 py-0.5 rounded">{inviteData.code}</code>
+              </p>
+              
+              <div className="mt-4 pt-4 border-t border-gray-200">
+                <a
+                  href={`/play/${inviteData.gameId}`}
+                  className="block w-full py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 text-center"
+                >
+                  Go to Game →
+                </a>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Stats */}
         {(stats.humanWins > 0 || stats.agentWins > 0) && (
@@ -260,17 +363,19 @@ export default function Game() {
       <div className="w-full flex items-center justify-between">
         <button
           onClick={handleReset}
-          className="px-3 py-1 text-sm text-gray-600 hover:text-black"
+          className="w-16 text-left text-sm text-gray-600 hover:text-black"
         >
           ← Back
         </button>
         <h1 className="text-xl font-bold text-gray-900">Gomoku</h1>
-        <button
-          onClick={() => setShowRules(true)}
-          className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-600 hover:text-black text-sm font-medium transition-colors"
-        >
-          ?
-        </button>
+        <div className="w-16 flex justify-end">
+          <button
+            onClick={() => setShowRules(true)}
+            className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-600 hover:text-black text-sm font-medium transition-colors"
+          >
+            ?
+          </button>
+        </div>
       </div>
 
       {/* Status */}
