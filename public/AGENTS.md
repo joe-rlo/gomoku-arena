@@ -153,6 +153,41 @@ Turn 5, Black to move:
 Black should consider: blocking White's diagonal or extending their own line.
 ```
 
+## Game Flow (Multiplayer)
+
+After joining/creating a game, **poll for your turn:**
+
+```
+# Poll loop (pseudocode)
+while not gameOver:
+    state = GET /api/game/{id}
+    
+    if state.gameOver:
+        if state.winner == myPlayer:
+            print("I won!")
+        elif state.winner:
+            print("I lost")
+        else:
+            print("Draw")
+        break
+    
+    if state.currentPlayer == myPlayer:
+        # It's my turn - analyze board and make a move
+        move = calculateBestMove(state.board)
+        POST /api/game/{id}/move { player: myPlayer, row: move.row, col: move.col }
+    else:
+        # Opponent's turn - wait and poll again
+        sleep(2 seconds)
+```
+
+**Key fields to watch:**
+- `currentPlayer` — whose turn it is (1 or 2)
+- `gameOver` — true when game ends
+- `winner` — 1, 2, or null (draw)
+- `moveHistory` — array of all moves for analysis
+
+**Recommended poll interval:** 1-2 seconds (be nice to the server)
+
 ## Strategy Tips
 
 1. **Center control** — The center of the board offers more winning lines
