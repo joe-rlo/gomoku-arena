@@ -101,25 +101,25 @@ export default function Game() {
   if (!gameStarted) {
     return (
       <div className="flex flex-col items-center gap-6 p-4 max-w-md mx-auto">
-        <h1 className="text-3xl font-bold text-center">⚫ Gomoku Arena ⚪</h1>
-        <p className="text-center text-gray-600">
+        <h1 className="text-3xl font-bold text-center text-gray-900">⚫ Gomoku Arena ⚪</h1>
+        <p className="text-center text-gray-700">
           Get 5 in a row to win. Each player has 25 moves.
         </p>
 
         <div className="w-full space-y-4">
           <div>
-            <label className="block text-sm font-medium mb-2">Your Name</label>
+            <label className="block text-sm font-medium mb-2 text-gray-800">Your Name</label>
             <input
               type="text"
               value={playerName}
               onChange={(e) => setPlayerName(e.target.value)}
               placeholder="Enter your name"
-              className="w-full px-4 py-3 border rounded-lg text-lg"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg text-lg text-gray-900 placeholder-gray-500"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-2">Game Mode</label>
+            <label className="block text-sm font-medium mb-2 text-gray-800">Game Mode</label>
             <div className="grid grid-cols-1 gap-2">
               {[
                 { mode: 'human-vs-ai' as GameMode, label: '👤 vs 🤖 Human vs AI', desc: 'Challenge the machine' },
@@ -132,13 +132,13 @@ export default function Game() {
                   className={`
                     p-4 rounded-lg border-2 text-left transition-all
                     ${gameMode === mode 
-                      ? 'border-blue-500 bg-blue-50' 
-                      : 'border-gray-200 hover:border-gray-300'
+                      ? 'border-blue-600 bg-blue-50' 
+                      : 'border-gray-300 hover:border-gray-400 bg-white'
                     }
                   `}
                 >
-                  <div className="font-medium">{label}</div>
-                  <div className="text-sm text-gray-500">{desc}</div>
+                  <div className="font-medium text-gray-900">{label}</div>
+                  <div className="text-sm text-gray-600">{desc}</div>
                 </button>
               ))}
             </div>
@@ -154,20 +154,20 @@ export default function Game() {
 
         {/* Stats */}
         {(stats.humanWins > 0 || stats.agentWins > 0) && (
-          <div className="w-full p-4 bg-gray-50 rounded-lg">
-            <h3 className="font-medium mb-2 text-center">Session Stats</h3>
+          <div className="w-full p-4 bg-white border border-gray-200 rounded-lg">
+            <h3 className="font-medium mb-2 text-center text-gray-900">Session Stats</h3>
             <div className="grid grid-cols-3 gap-4 text-center">
               <div>
                 <div className="text-2xl font-bold text-green-600">{stats.humanWins}</div>
-                <div className="text-sm text-gray-500">Human Wins</div>
+                <div className="text-sm text-gray-700">Human Wins</div>
               </div>
               <div>
-                <div className="text-2xl font-bold text-gray-400">{stats.draws}</div>
-                <div className="text-sm text-gray-500">Draws</div>
+                <div className="text-2xl font-bold text-gray-500">{stats.draws}</div>
+                <div className="text-sm text-gray-700">Draws</div>
               </div>
               <div>
                 <div className="text-2xl font-bold text-red-600">{stats.agentWins}</div>
-                <div className="text-sm text-gray-500">AI Wins</div>
+                <div className="text-sm text-gray-700">AI Wins</div>
               </div>
             </div>
           </div>
