@@ -287,7 +287,7 @@ export default function Game() {
         )}
 
         {/* Global Stats */}
-        {globalStats && globalStats.totalGames > 0 && (
+        {globalStats && (globalStats.humanWins + globalStats.agentWins + globalStats.ties) > 0 && (
           <div className="w-full p-4 bg-gradient-to-r from-green-50 to-red-50 border border-gray-200 rounded-lg">
             <h3 className="font-medium mb-2 text-center text-gray-900">🏆 Global Scoreboard</h3>
             <div className="grid grid-cols-3 gap-4 text-center">
