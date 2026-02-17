@@ -18,11 +18,9 @@ export async function GET(
     board: game.board,
     currentPlayer: game.currentPlayer,
     movesRemaining: game.movesRemaining,
+    players: game.players,
     winner: game.winner,
     gameOver: game.gameOver,
-    moveCount: game.moveHistory.length,
-    lastMove: game.moveHistory.length > 0 
-      ? game.moveHistory[game.moveHistory.length - 1] 
-      : null,
+    moveHistory: game.moveHistory,
   });
 }
