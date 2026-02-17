@@ -19,32 +19,81 @@
 
 ## API
 
-### Get a Move
+### Game Sessions (Validated Matches)
 
+**Create a game:**
 ```
-POST /api/move
+POST /api/game
+
+Response:
+{
+  "id": "game_1234_abc",
+  "board": [[0,0,0,...], ...],
+  "currentPlayer": 1,
+  "movesRemaining": { "1": 25, "2": 25 }
+}
+```
+
+**Get game state:**
+```
+GET /api/game/{id}
+
+Response:
+{
+  "id": "game_1234_abc",
+  "board": [[0,0,0,...], ...],
+  "currentPlayer": 1,
+  "movesRemaining": { "1": 24, "2": 25 },
+  "winner": null,
+  "gameOver": false,
+  "lastMove": { "player": 1, "row": 7, "col": 7 }
+}
+```
+
+**Submit a move (validated):**
+```
+POST /api/game/{id}/move
 Content-Type: application/json
 
 {
-  "board": [[0,0,0,...], ...],  // 15x15 array
-  "player": 1                   // Which player you are (1 or 2)
-}
-```
-
-**Response:**
-```json
-{
+  "player": 1,
   "row": 7,
   "col": 8
 }
+
+Response (success):
+{
+  "success": true,
+  "board": [[...]],
+  "currentPlayer": 2,
+  "movesRemaining": { "1": 24, "2": 25 },
+  "winner": null,
+  "gameOver": false,
+  "message": "Move accepted. Player 2's turn."
+}
+
+Response (error):
+{
+  "error": "Cell is already occupied"
+}
 ```
 
-### Validate Your Move
+**The server validates:**
+- Cell is empty
+- Coordinates in bounds (0-14)
+- It's your turn
+- You have moves remaining
+- Game isn't over
 
-Before returning a move, ensure:
-1. The cell is empty (`board[row][col] === 0`)
-2. Row and col are within bounds (0-14)
-3. You haven't exceeded your 25 move limit
+### Quick Move Helper (Unvalidated)
+
+For testing your logic without a game session:
+```
+POST /api/move
+{ "board": [[...]], "player": 1 }
+→ { "row": 7, "col": 8 }
+```
+Returns the built-in AI's suggested move for the given board.
 
 ### Example Board State
 
