@@ -25,7 +25,7 @@ export default function Game() {
   const [stats, setStats] = useState({ humanWins: 0, agentWins: 0, draws: 0 });
   const [showRules, setShowRules] = useState(false);
   const [showInvite, setShowInvite] = useState(false);
-  const [inviteData, setInviteData] = useState<{ code: string; url: string; gameId: string } | null>(null);
+  const [inviteData, setInviteData] = useState<{ code: string; url: string; gameId: string; yourPlayer: number } | null>(null);
   const [creatingInvite, setCreatingInvite] = useState(false);
   const [globalStats, setGlobalStats] = useState<{ 
     humanWins: number; 
@@ -135,6 +135,7 @@ export default function Game() {
           code: data.inviteCode,
           url: data.inviteUrl,
           gameId: data.id,
+          yourPlayer: data.yourPlayer,
         });
         setShowInvite(true);
       }
@@ -280,12 +281,16 @@ export default function Game() {
               </p>
               
               <div className="mt-4 pt-4 border-t border-gray-200">
-                <a
-                  href={`/play/${inviteData.gameId}`}
+                <button
+                  onClick={() => {
+                    sessionStorage.setItem(`game_${inviteData.gameId}_player`, String(inviteData.yourPlayer));
+                    sessionStorage.setItem(`game_${inviteData.gameId}_name`, playerName.trim());
+                    window.location.href = `/play/${inviteData.gameId}`;
+                  }}
                   className="block w-full py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 text-center"
                 >
                   Go to Game →
-                </a>
+                </button>
               </div>
             </div>
           </div>
